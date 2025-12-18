@@ -1,11 +1,20 @@
 package com.partha.expensemanager.service;
 
+import com.partha.expensemanager.dto.AuthDTO;
 import com.partha.expensemanager.dto.ProfileDTO;
 import com.partha.expensemanager.entity.ProfileEntity;
 import com.partha.expensemanager.repository.ProfileRepository;
+import com.partha.expensemanager.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -14,6 +23,9 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     public ProfileDTO registerProfile(ProfileDTO profileDTO) {
         ProfileEntity newProfile = toEntity(profileDTO);
@@ -33,7 +45,7 @@ public class ProfileService {
                 .id(profileDTO.getId())
                 .fullName(profileDTO.getFullName())
                 .email(profileDTO.getEmail())
-                .passWord(profileDTO.getPassWord())
+                .passWord(passwordEncoder.encode(profileDTO.getPassWord()))
                 .profileImageUrl(profileDTO.getProfileImageUrl())
                 .createdAt(profileDTO.getCreatedAt())
                 .updatedAt(profileDTO.getUpdatedAt())
@@ -59,5 +71,43 @@ public class ProfileService {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    public boolean isAccountActive(String email) {
+        return profileRepository.findByEmail(email)
+                .map(ProfileEntity::getIsActive)
+                .orElse(false);
+    }
+
+    public ProfileEntity getCurrentProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return profileRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Profile not found with email: " + authentication.getName()));
+    }
+
+    public ProfileDTO getPublicProfile(String email) {
+        ProfileEntity currentUser = null;
+        if (email == null) {
+            currentUser = getCurrentProfile();
+        } else {
+            currentUser = profileRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("Profile not found with email: " + email));
+        }
+        return toDTO(currentUser);
+    }
+
+    public Map<String, Object> authenticateAndGenerateToken(AuthDTO authDTO) {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authDTO.getEmail(), authDTO.getPassword()));
+            // After authentication, generate JWT token
+            String token = jwtUtil.generateToken(authDTO.getEmail());
+            return Map.of(
+                    "token", token,
+                    "user", getPublicProfile(authDTO.getEmail())
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Invalid username or password.");
+        }
     }
 }
