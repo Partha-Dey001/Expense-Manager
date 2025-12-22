@@ -5,9 +5,9 @@ import com.partha.expensemanager.entity.CategoryEntity;
 import com.partha.expensemanager.entity.ProfileEntity;
 import com.partha.expensemanager.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,12 +19,18 @@ public class CategoryService {
     // save category
     public CategoryDTO saveCategory(CategoryDTO categoryDTO) {
         ProfileEntity profile = profileService.getCurrentProfile();
-        if (categoryRepository.existsByNameAndProfileId(categoryDTO.getName(), profile.getId())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Category with this name already exists");
+        if (Boolean.TRUE.equals(categoryRepository.existsByNameAndProfileId(categoryDTO.getName(), profile.getId()))){
+            throw new RuntimeException("Category with this name already exists");
         }
         CategoryEntity newCategory = toEntity(categoryDTO, profile);
         newCategory = categoryRepository.save(newCategory);
         return toDTO(newCategory);
+    }
+
+    public List<CategoryDTO> getCategoriesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<CategoryEntity> categories = categoryRepository.findByProfileId(profile.getId());
+        return categories.stream().map(this::toDTO).toList();
     }
 
     private CategoryEntity toEntity(CategoryDTO categoryDTO, ProfileEntity profile) {
