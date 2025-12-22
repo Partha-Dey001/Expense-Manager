@@ -27,10 +27,28 @@ public class CategoryService {
         return toDTO(newCategory);
     }
 
+    // Get categories for current user
     public List<CategoryDTO> getCategoriesForCurrentUser(){
         ProfileEntity profile = profileService.getCurrentProfile();
         List<CategoryEntity> categories = categoryRepository.findByProfileId(profile.getId());
         return categories.stream().map(this::toDTO).toList();
+    }
+
+    // Get categories by type for current user
+    public List<CategoryDTO> getCategoriesByTypeForCurrentUser(String type) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<CategoryEntity> entities = categoryRepository.findByTypeAndProfileId(type, profile.getId());
+        return entities.stream().map(this::toDTO).toList();
+    }
+
+    public CategoryDTO updateCategory(Long categoryId, CategoryDTO dto) {
+        ProfileEntity currentProfile = profileService.getCurrentProfile();
+        CategoryEntity existingCategory =  categoryRepository.findByIdAndProfileId(categoryId, currentProfile.getId())
+                .orElseThrow(() ->  new RuntimeException("Category with this id does not exist"));
+        existingCategory.setName(dto.getName());
+        existingCategory.setIcon(dto.getIcon());
+        existingCategory = categoryRepository.save(existingCategory);
+        return toDTO(existingCategory);
     }
 
     private CategoryEntity toEntity(CategoryDTO categoryDTO, ProfileEntity profile) {
