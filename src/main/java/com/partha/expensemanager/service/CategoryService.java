@@ -41,6 +41,7 @@ public class CategoryService {
         return entities.stream().map(this::toDTO).toList();
     }
 
+    // Helper methods
     public CategoryDTO updateCategory(Long categoryId, CategoryDTO dto) {
         ProfileEntity currentProfile = profileService.getCurrentProfile();
         CategoryEntity existingCategory =  categoryRepository.findByIdAndProfileId(categoryId, currentProfile.getId())
