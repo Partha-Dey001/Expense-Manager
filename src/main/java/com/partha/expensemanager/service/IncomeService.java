@@ -1,14 +1,13 @@
 package com.partha.expensemanager.service;
 
-import com.partha.expensemanager.dto.ExpenseDTO;
 import com.partha.expensemanager.dto.IncomeDTO;
 import com.partha.expensemanager.entity.CategoryEntity;
-import com.partha.expensemanager.entity.ExpenseEntity;
 import com.partha.expensemanager.entity.IncomeEntity;
 import com.partha.expensemanager.entity.ProfileEntity;
 import com.partha.expensemanager.repository.CategoryRepository;
 import com.partha.expensemanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -66,6 +65,13 @@ public class IncomeService {
         ProfileEntity profile = profileService.getCurrentProfile();
         BigDecimal total = incomeRepository.findTotalExpenseByProfileId(profile.getId());
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    // Filter expenses
+    public List<IncomeDTO> filterIncomes(LocalDate startDate, LocalDate endDate, String keyword, Sort sort) {
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<IncomeEntity> list = incomeRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(), startDate, endDate, keyword, sort);
+        return list.stream().map(this::toDTO).toList();
     }
 
     // Helper methods

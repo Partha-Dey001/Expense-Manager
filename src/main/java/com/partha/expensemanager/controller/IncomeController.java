@@ -1,6 +1,5 @@
 package com.partha.expensemanager.controller;
 
-import com.partha.expensemanager.dto.ExpenseDTO;
 import com.partha.expensemanager.dto.IncomeDTO;
 import com.partha.expensemanager.service.IncomeService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class IncomeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncomeDTO>> getExpenses(){
+    public ResponseEntity<List<IncomeDTO>> getIncomes(){
         List<IncomeDTO> incomes = incomeService.getCurrentMonthIncomesForCurrentUser();
         return ResponseEntity.ok(incomes);
     }
