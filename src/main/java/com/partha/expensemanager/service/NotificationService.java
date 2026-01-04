@@ -47,8 +47,7 @@ public class NotificationService {
         log.info("Job finished: sendDailyIncomeExpenseReminder()");
     }
 
-    @Scheduled(cron = "0 * * * * *", zone = "IST")
-//    @Scheduled(cron = "0 0 23 * * *", zone = "IST")
+    @Scheduled(cron = "0 0 23 * * *", zone = "IST")
     public void sendDailyExpenseSummary() {
         log.info("Job started: sendDailyExpenseSummary()");
         List<ProfileEntity> profiles = profileRepository.findAll();
@@ -84,12 +83,7 @@ public class NotificationService {
 
                             .append("<td style='border:1px solid #ddd;padding:8px;'>")
                             .append(expense.getCategoryId() != null ? expense.getCategoryName() : "N/A")
-                            .append("</td>")
-
-                            .append("<td style='border:1px solid #ddd;padding:8px;'>")
-                            .append(expense.getDate())
-                            .append("</td>")
-                            .append("</tr>");
+                            .append("</td>");
                 }
                 table.append("</table>");
                 String body = "Hi "+ profile.getFullName()+",<br/><br/> Here is a summary of your expenses for today:<br/><br/>"+table+"<br/><br/>Best regards,<br/>Expense manager team";
